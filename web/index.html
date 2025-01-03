@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráficos de Linhas</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 90vw;
+        }
+        canvas {
+            width: 40vw;
+        }
+        .chart2 canvas{
+            width: 75%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quantidade de regitros de perícia por ano</h1>
+    <div class="chart-container">
+        <div>
+            
+            <canvas id="chart2011_2015"></canvas>
+        </div>
+        <div>
+            
+            <canvas id="chart2022_2024"></canvas>
+        </div>
+    </div>
+
+
+
+
+    <h1>Quantidade de regitros de perícia por mês de cada ano</h1>
+    <div class="chart-container chart2">
+        <canvas id="chart2011_2015_mes"></canvas>
+        <canvas id="chart2022_2024_mes"></canvas>
+
+    </div>
+
+
+    <br>
+    <h1>Total de dias de licença por ano e por mês</h1>
+
+    <canvas id="chart2011_2015_total_days"></canvas>
+    <canvas id="chart2022_2024_total_days"></canvas>
+
+    <canvas id="chart2011_2015_dias_licenca"></canvas>
+    <canvas id="chart2022_2024_dias_licenca"></canvas>
+
+
+
+    <h1>Grafico de proporção de acidentes nas licenças:</h1>
+    <canvas id="chartProportionRecords2011_2015"></canvas>
+<canvas id="chartProportionRecords2022_2024"></canvas>
+
+<h1>Grafico de proporção de cargos</h1>
+<canvas id="chartCargoProportion2011_2015"></canvas>
+<canvas id="chartCargoProportion2022_2024"></canvas>
+
+
+
+
+
+
+  
+
+
+    <script>
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para contar registros por ano
+        function countByYear(records) {
+            return records.reduce((acc, record) => {
+                const year = record["Ano da Perícia"];
+                acc[year] = (acc[year] || 0) + 1;
+                return acc;
+            }, {});
+        }
+
+        // Função para criar o gráfico de linhas
+        function createLineChart(ctx, title, dataCounts) {
+            const labels = Object.keys(dataCounts); // Anos
+            const values = Object.values(dataCounts); // Contagens
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Registros',
+                        data: values,
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.4, // Suaviza as curvas
+                        pointStyle: 'circle',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Quantidade de Registros'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Carregar os dados e criar os gráficos
+        loadJSON('./grafico_mensal_dados.json').then(data => {
+            const counts2011_2015 = countByYear(data['2011_2015']);
+            const counts2022_2024 = countByYear(data['2022_2024']);
+
+            createLineChart(document.getElementById('chart2011_2015'), 'Registros 2011-2015', counts2011_2015);
+            createLineChart(document.getElementById('chart2022_2024'), 'Registros 2022-2024', counts2022_2024);
+        }).catch(error => {
+            console.error('Erro ao carregar os dados:', error);
+        });
+    </script>
+
+
+
+<script>
+    async function createMonthlyCharts() {
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para agrupar os dados por mês e ano
+        function groupByMonthAndYear(records) {
+            const monthsOrder = [
+                "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
+                "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
+            ];
+            const grouped = {};
+
+            records.forEach(record => {
+                const year = record["Ano da Perícia"];
+                const month = record["Mês Perícia"].split(" ")[0].toUpperCase();
+
+                if (!grouped[year]) grouped[year] = {};
+                grouped[year][month] = (grouped[year][month] || 0) + 1;
+            });
+
+            const datasets = Object.keys(grouped).map(year => {
+                const data = monthsOrder.map(month => grouped[year][month] || 0);
+                return {
+                    label: year,
+                    data: data,
+                    fill: false,
+                    borderColor: getRandomColor(),
+                    tension: 0.4
+                };
+            });
+
+            return { months: monthsOrder, datasets };
+        }
+
+        // Função para gerar uma cor aleatória
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        // Carregar os dados e criar os gráficos
+        try {
+            const data = await loadJSON('./grafico_mensal_dados.json');
+            const chartData2011_2015 = groupByMonthAndYear(data['2011_2015']);
+            const chartData2022_2024 = groupByMonthAndYear(data['2022_2024']);
+
+            // Criar o gráfico de 2011-2015
+            new Chart(document.getElementById('chart2011_2015_mes'), {
+                type: 'line',
+                data: {
+                    labels: chartData2011_2015.months,
+                    datasets: chartData2011_2015.datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Registros Mensais 2011-2015'
+                        }
+                    }
+                }
+            });
+
+            // Criar o gráfico de 2022-2024
+            new Chart(document.getElementById('chart2022_2024_mes'), {
+                type: 'line',
+                data: {
+                    labels: chartData2022_2024.months,
+                    datasets: chartData2022_2024.datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Registros Mensais 2022-2024'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao carregar ou processar os dados:', error);
+        }
+    }
+
+    // Chamar a função ao carregar a página
+    createMonthlyCharts();
+</script>
+
+
+
+
+
+<script>
+    async function createDaysOffCharts() {
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para agrupar os dados por mês e ano, somando os dias de afastamento
+        function groupByMonthAndYear(records) {
+            const monthsOrder = [
+                "JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO",
+                "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"
+            ];
+            const grouped = {};
+
+            records.forEach(record => {
+                const year = record["Ano da Perícia"];
+                const month = record["Mês Perícia"].split(" ")[0].toUpperCase();
+                const daysOff = record["Máximo Dias Afastamento Perícia"] || 0;
+
+                if (!grouped[year]) grouped[year] = {};
+                grouped[year][month] = (grouped[year][month] || 0) + daysOff;
+            });
+
+            const datasets = Object.keys(grouped).map(year => {
+                const data = monthsOrder.map(month => grouped[year][month] || 0);
+                return {
+                    label: year,
+                    data: data,
+                    fill: false,
+                    borderColor: getRandomColor(),
+                    tension: 0.4
+                };
+            });
+
+            return { months: monthsOrder, datasets };
+        }
+
+        // Função para gerar uma cor aleatória
+        function getRandomColor() {
+            const r = Math.floor(Math.random() * 255);
+            const g = Math.floor(Math.random() * 255);
+            const b = Math.floor(Math.random() * 255);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        // Carregar os dados e criar os gráficos
+        try {
+            const data = await loadJSON('./grafico_mensal_dados.json');
+            const chartData2011_2015 = groupByMonthAndYear(data['2011_2015']);
+            const chartData2022_2024 = groupByMonthAndYear(data['2022_2024']);
+
+            // Criar o gráfico de dias de licença para 2011-2015
+            new Chart(document.getElementById('chart2011_2015_dias_licenca'), {
+                type: 'line',
+                data: {
+                    labels: chartData2011_2015.months,
+                    datasets: chartData2011_2015.datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total de Dias de Licença 2011-2015'
+                        }
+                    }
+                }
+            });
+
+            // Criar o gráfico de dias de licença para 2022-2024
+            new Chart(document.getElementById('chart2022_2024_dias_licenca'), {
+                type: 'line',
+                data: {
+                    labels: chartData2022_2024.months,
+                    datasets: chartData2022_2024.datasets
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Total de Dias de Licença 2022-2024'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao carregar ou processar os dados:', error);
+        }
+    }
+
+    // Chamar a função ao carregar a página
+    createDaysOffCharts();
+</script>
+
+
+
+
+<script>
+    async function createTotalDaysOffChart() {
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para somar os dias de licença por ano
+        function sumDaysOffByYear(records) {
+            const grouped = {};
+
+            records.forEach(record => {
+                const year = record["Ano da Perícia"];
+                const daysOff = record["Máximo Dias Afastamento Perícia"] || 0;
+
+                if (!grouped[year]) grouped[year] = 0;
+                grouped[year] += daysOff;
+            });
+
+            const years = Object.keys(grouped);
+            const data = years.map(year => grouped[year]);
+
+            return { years, data };
+        }
+
+        // Carregar os dados e criar o gráfico
+        try {
+            const data = await loadJSON('./grafico_mensal_dados.json');
+            const chartData2011_2015 = sumDaysOffByYear(data['2011_2015']);
+            const chartData2022_2024 = sumDaysOffByYear(data['2022_2024']);
+
+            // Criar o gráfico de total de dias de licença para 2011-2015
+            new Chart(document.getElementById('chart2011_2015_total_days'), {
+                type: 'line',
+                data: {
+                    labels: chartData2011_2015.years,
+                    datasets: [{
+                        label: 'Total de Dias de Licença (2011-2015)',
+                        data: chartData2011_2015.data,
+                        fill: false,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Total de Dias de Licença 2011-2015'
+                        }
+                    }
+                }
+            });
+
+            // Criar o gráfico de total de dias de licença para 2022-2024
+            new Chart(document.getElementById('chart2022_2024_total_days'), {
+                type: 'line',
+                data: {
+                    labels: chartData2022_2024.years,
+                    datasets: [{
+                        label: 'Total de Dias de Licença (2022-2024)',
+                        data: chartData2022_2024.data,
+                        fill: false,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: 'Total de Dias de Licença 2022-2024'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao carregar ou processar os dados:', error);
+        }
+    }
+
+    // Chamar a função ao carregar a página
+    createTotalDaysOffChart();
+</script>
+
+
+
+<script>
+    async function createProportionChart() {
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para calcular a proporção de registros de acidentes (K081 ou I64)
+        function calculateProportion(records) {
+            let totalRecords = 0;
+            let accidentRecords = 0;
+
+            records.forEach(record => {
+                const cidPrincipal = record["CID Principal"];
+
+                totalRecords += 1; // Contabiliza cada registro
+
+                // Se o CID Principal for K081 ou I64, contamos como acidente
+                if (cidPrincipal === "K081" || cidPrincipal === "I64") {
+                    accidentRecords += 1;
+                }
+            });
+
+            // Calcular a proporção
+            const proportion = totalRecords > 0 ? (accidentRecords / totalRecords) * 100 : 0;
+
+            return { totalRecords, accidentRecords, proportion };
+        }
+
+        // Carregar os dados e criar o gráfico
+        try {
+            const data = await loadJSON('./grafico_mensal_dados.json');
+            const allData2011_2015 = data['2011_2015'];
+            const allData2022_2024 = data['2022_2024'];
+
+            // Calcular a proporção para 2011-2015
+            const proportionData2011_2015 = calculateProportion(allData2011_2015);
+
+            // Calcular a proporção para 2022-2024
+            const proportionData2022_2024 = calculateProportion(allData2022_2024);
+
+            // Criar o gráfico de proporção de registros de acidente para 2011-2015
+            new Chart(document.getElementById('chartProportionRecords2011_2015'), {
+                type: 'pie',
+                data: {
+                    labels: ['Acidentes (K081, I64)', 'Outros Registros'],
+                    datasets: [{
+                        label: 'Proporção de Registros de Acidente',
+                        data: [proportionData2011_2015.accidentRecords, proportionData2011_2015.totalRecords - proportionData2011_2015.accidentRecords],
+                        backgroundColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: {
+                            display: true,
+                            text: 'Proporção de Registros de Acidente (2011-2015)'
+                        }
+                    }
+                }
+            });
+
+            // Criar o gráfico de proporção de registros de acidente para 2022-2024
+            new Chart(document.getElementById('chartProportionRecords2022_2024'), {
+                type: 'pie',
+                data: {
+                    labels: ['Acidentes (K081, I64)', 'Outros Registros'],
+                    datasets: [{
+                        label: 'Proporção de Registros de Acidente',
+                        data: [proportionData2022_2024.accidentRecords, proportionData2022_2024.totalRecords - proportionData2022_2024.accidentRecords],
+                        backgroundColor: ['rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: {
+                            display: true,
+                            text: 'Proporção de Registros de Acidente (2022-2024)'
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Erro ao carregar ou processar os dados:', error);
+        }
+    }
+
+    // Chamar a função ao carregar a página
+    createProportionChart();
+</script>
+
+
+
+<script>
+    async function createCargoProportionChart() {
+        // Função para carregar o JSON
+        async function loadJSON(filePath) {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar o arquivo JSON: ${response.statusText}`);
+            }
+            return await response.json();
+        }
+
+        // Função para calcular a proporção de registros por cargo
+        function calculateCargoProportion(records) {
+            const cargoCount = {};
+
+            // Contabilizar registros por cargo
+            records.forEach(record => {
+                const cargo = record["Cargo"];
+
+                if (cargo in cargoCount) {
+                    cargoCount[cargo] += 1;
+                } else {
+                    cargoCount[cargo] = 1;
+                }
+            });
+
+            // Calcular o total de registros
+            const totalRecords = records.length;
+
+            // Calcular a proporção para cada cargo
+            const cargoProportion = [];
+            for (const [cargo, count] of Object.entries(cargoCount)) {
+                const proportion = (count / totalRecords) * 100;
+                cargoProportion.push({ cargo, count, proportion });
+            }
+
+            return cargoProportion;
+        }
+
+        // Carregar os dados e criar o gráfico
+        try {
+            const data = await loadJSON('./grafico_mensal_dados.json');
+            const allData2011_2015 = data['2011_2015'];
+            const allData2022_2024 = data['2022_2024'];
+
+            // Calcular a proporção de cargos para 2011-2015
+            const cargoData2011_2015 = calculateCargoProportion(allData2011_2015);
+
+            // Calcular a proporção de cargos para 2022-2024
+            const cargoData2022_2024 = calculateCargoProportion(allData2022_2024);
+
+            // Função para criar o gráfico
+            function createChart(elementId, cargoData, title) {
+                new Chart(document.getElementById(elementId), {
+                    type: 'pie',
+                    data: {
+                        labels: cargoData.map(item => item.cargo),
+                        datasets: [{
+                            label: 'Proporção de Cargos',
+                            data: cargoData.map(item => item.count),
+                            backgroundColor: cargoData.map((_, index) => `rgba(${(index * 50) % 255}, ${(index * 100) % 255}, ${(index * 150) % 255}, 1)`),
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: {
+                                display: true,
+                                text: title
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Criar o gráfico de cargos para 2011-2015
+            createChart('chartCargoProportion2011_2015', cargoData2011_2015, 'Proporção de Cargos (2011-2015)');
+
+            // Criar o gráfico de cargos para 2022-2024
+            createChart('chartCargoProportion2022_2024', cargoData2022_2024, 'Proporção de Cargos (2022-2024)');
+        } catch (error) {
+            console.error('Erro ao carregar ou processar os dados:', error);
+        }
+    }
+
+    // Chamar a função ao carregar a página
+    createCargoProportionChart();
+</script>
+
+
+
+
+
+
+</body>
+</html>
