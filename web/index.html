@@ -5,74 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gráficos de Linhas</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ 
+</head>
+<body>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 20px;
         }
+    
+        /* Container de gráficos para alinhamento e ajustes */
         .chart-container {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
-            max-width: 90vw;
+            max-width: 100vw;
         }
+    
+        /* Estilo para todos os canvas */
         canvas {
-            width: 40vw;
+            width: 100%;
+            max-width: 1100px;
+            height: auto;
+            background-color: rgba(192, 184, 184, 0.534);
+            border-radius: 16px;
         }
-        .chart2 canvas{
-            width: 75%;
+    
+        /* Gráficos que devem ser alinhados lado a lado */
+        .chart-united {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 20px;  /* Adicionando espaçamento entre os gráficos */
+        }
+    
+        .chart-united canvas {
+            width: 48%;  /* Reduzido para evitar que os gráficos fiquem muito próximos */
+            max-width: 500px;
+            margin-bottom: 20px;  /* Adicionando espaçamento inferior */
+            
+        }
+    
+        /* Gráficos em blocos separados (em linhas diferentes) */
+        .chart-separate {
+            width: 100%;
+            display: block;
+            margin-bottom: 40px; /* Espaçamento entre os gráficos */
+            justify-content: center;
+            display: flex;
+        }
+    
+        /* Gráficos que devem ocupar mais espaço */
+        .chart2 canvas {
+            width: 100%;
+            max-width: 80%;  /* Largura limitada para gráficos maiores */
+        }
+    
+        /* Responsividade para telas menores */
+        @media (max-width: 768px) {
+            .chart-united canvas {
+                width: 100%;  /* Ocupa toda a largura da tela em dispositivos móveis */
+                max-width: none;
+            }
+    
+            .chart-separate canvas {
+                width: 100%;  /* Ocupa toda a largura da tela em dispositivos móveis */
+            }
         }
     </style>
-</head>
-<body>
-    <h1>Quantidade de regitros de perícia por ano</h1>
-    <div class="chart-container">
-        <div>
-            
+    
+    
+    <body>
+        <h1>Quantidade de registros de perícia por ano</h1>
+        <div class="chart-united">
             <canvas id="chart2011_2015"></canvas>
-        </div>
-        <div>
-            
             <canvas id="chart2022_2024"></canvas>
         </div>
-    </div>
-
-
-
-
-    <h1>Quantidade de regitros de perícia por mês de cada ano</h1>
-    <div class="chart-container chart2">
-        <canvas id="chart2011_2015_mes"></canvas>
-        <canvas id="chart2022_2024_mes"></canvas>
-
-    </div>
-
-
-    <br>
-    <h1>Total de dias de licença por ano e por mês</h1>
-
-    <canvas id="chart2011_2015_total_days"></canvas>
-    <canvas id="chart2022_2024_total_days"></canvas>
-
-    <canvas id="chart2011_2015_dias_licenca"></canvas>
-    <canvas id="chart2022_2024_dias_licenca"></canvas>
-
-
-
-    <h1>Grafico de proporção de acidentes nas licenças:</h1>
-    <canvas id="chartProportionRecords2011_2015"></canvas>
-<canvas id="chartProportionRecords2022_2024"></canvas>
-
-<h1>Grafico de proporção de cargos</h1>
-<canvas id="chartCargoProportion2011_2015"></canvas>
-<canvas id="chartCargoProportion2022_2024"></canvas>
-
-
-
-
+    
+        <h1>Quantidade de registros de perícia por mês de cada ano</h1>
+        <div class="chart-separate">
+            <canvas id="chart2011_2015_mes"></canvas>
+        </div>
+        <div class="chart-separate">
+            <canvas id="chart2022_2024_mes"></canvas>
+        </div>
+    
+        <h1>Total de dias de licença por ano e por mês</h1>
+        <div class="chart-united">
+            <canvas id="chart2011_2015_total_days"></canvas>
+            <canvas id="chart2022_2024_total_days"></canvas>
+        </div>
+    
+        <div class="chart-separate">
+            <canvas id="chart2011_2015_dias_licenca"></canvas>
+        </div>
+        <div class="chart-separate">
+            <canvas id="chart2022_2024_dias_licenca"></canvas>
+        </div>
+    
+        <h1>Gráfico de proporção de acidentes nas licenças:</h1>
+        <div class="chart-united">
+            <canvas id="chartProportionRecords2011_2015"></canvas>
+            <canvas id="chartProportionRecords2022_2024"></canvas>
+        </div>
+    
+        <h1>Gráfico de proporção de cargos</h1>
+        <div class="chart-united">
+            <canvas id="chartCargoProportion2011_2015"></canvas>
+            <canvas id="chartCargoProportion2022_2024"></canvas>
+        </div>
+    </body>
+    
 
 
   
@@ -127,7 +174,7 @@
                         }
                     },
                     scales: {
-                        y: {
+                        y: {    
                             beginAtZero: true,
                             title: {
                                 display: true,
